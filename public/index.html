@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Reminder System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .auth-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .status.connected {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.disconnected {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #5568d3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn.test {
+      background: #28a745;
+    }
+
+    .btn.test:hover {
+      background: #218838;
+    }
+
+    .btn.reset {
+      background: #ffc107;
+      color: #333;
+    }
+
+    .btn.reset:hover {
+      background: #e0a800;
+    }
+
+    .dashboard {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .dashboard-header h2 {
+      color: #333;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f8f9fa;
+    }
+
+    th {
+      text-align: left;
+      padding: 12px;
+      color: #666;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 16px 12px;
+      border-bottom: 1px solid #e0e0e0;
+      color: #333;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.pending {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .badge.complete {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .message {
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .schedule-info {
+      background: #e7f3ff;
+      border-left: 4px solid #2196F3;
+      padding: 12px 16px;
+      margin-top: 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #0c5460;
+    }
+
+    .schedule-info strong {
+      color: #004085;
+    }
+
+    .test-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .test-controls .btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+      min-height: 80px;
+      justify-content: center;
+    }
+
+    .btn-label {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .btn-sublabel {
+      font-size: 12px;
+      opacity: 0.9;
+      font-weight: 400;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📊 Portfolio Reminder System</h1>
+      <p class="subtitle">Automated weekly reminders for portfolio company updates</p>
+
+      <div class="auth-section">
+        <div id="authStatus" class="status disconnected">
+          <span id="statusIcon">●</span>
+          <span id="statusText">Not Connected</span>
+        </div>
+        <button id="connectBtn" class="btn">Connect with Gmail</button>
+      </div>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <div class="dashboard">
+      <div class="dashboard-header">
+        <h2>Portfolio Companies</h2>
+        <div class="actions">
+          <button id="resetBtn" class="btn reset">Reset All to Pending</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Owner</th>
+            <th>Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reminderTable">
+          <tr>
+            <td colspan="4" style="text-align: center; color: #999;">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="schedule-info">
+        <strong>[SCHEDULE] Weekly Notification Timeline:</strong>
+        <div style="margin-top: 10px; line-height: 2;">
+          <div><strong>Stage 1 (Wed 9 AM):</strong> Send reminders to portfolio owners - <em>Every 2 mins (testing)</em></div>
+          <div><strong>Stage 2 (Thu 9 AM):</strong> Chase notification to Matt & Ivan - <em>Every 4 mins (testing)</em></div>
+          <div><strong>Stage 3 (Thu 4 PM):</strong> Review notification to Neil & Karl - <em>Every 6 mins (testing)</em></div>
+          <div><strong>Stage 4 (Fri 12 PM):</strong> Final report to Rick - <em>Every 8 mins (testing)</em></div>
+        </div>
+      </div>
+
+      <div class="dashboard-header" style="margin-top: 30px;">
+        <h2>Manual Test Controls</h2>
+      </div>
+
+      <div class="test-controls">
+        <button id="testOwnerBtn" class="btn test" disabled>
+          <div class="btn-label">Test Stage 1</div>
+          <div class="btn-sublabel">Owner Reminders</div>
+        </button>
+        <button id="testChaseBtn" class="btn test" disabled>
+          <div class="btn-label">Test Stage 2</div>
+          <div class="btn-sublabel">Chase (Matt & Ivan)</div>
+        </button>
+        <button id="testReviewBtn" class="btn test" disabled>
+          <div class="btn-label">Test Stage 3</div>
+          <div class="btn-sublabel">Review (Neil & Karl)</div>
+        </button>
+        <button id="testFinalBtn" class="btn test" disabled>
+          <div class="btn-label">Test Stage 4</div>
+          <div class="btn-sublabel">Final Report (Rick)</div>
+        </button>
+      </div>
+
+      <h3 style="margin-top: 30px; color: #333;">Team Members</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Email</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="teamTable">
+          <tr>
+            <td colspan="4" style="text-align: center; color: #999;">Loading...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let isAuthenticated = false;
+
+    // Check auth status on load
+    async function checkAuthStatus() {
+      try {
+        const response = await fetch('/auth/status');
+        const data = await response.json();
+        isAuthenticated = data.authenticated;
+        updateAuthUI();
+        if (isAuthenticated) {
+          loadReminders();
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    }
+
+    // Update auth UI
+    function updateAuthUI() {
+      const statusDiv = document.getElementById('authStatus');
+      const statusIcon = document.getElementById('statusIcon');
+      const statusText = document.getElementById('statusText');
+      const connectBtn = document.getElementById('connectBtn');
+      const testOwnerBtn = document.getElementById('testOwnerBtn');
+      const testChaseBtn = document.getElementById('testChaseBtn');
+      const testReviewBtn = document.getElementById('testReviewBtn');
+      const testFinalBtn = document.getElementById('testFinalBtn');
+
+      if (isAuthenticated) {
+        statusDiv.className = 'status connected';
+        statusIcon.textContent = '✓';
+        statusText.textContent = 'Connected to Gmail';
+        connectBtn.style.display = 'none';
+        testOwnerBtn.disabled = false;
+        testChaseBtn.disabled = false;
+        testReviewBtn.disabled = false;
+        testFinalBtn.disabled = false;
+      } else {
+        statusDiv.className = 'status disconnected';
+        statusIcon.textContent = '●';
+        statusText.textContent = 'Not Connected';
+        connectBtn.style.display = 'inline-block';
+        testOwnerBtn.disabled = true;
+        testChaseBtn.disabled = true;
+        testReviewBtn.disabled = true;
+        testFinalBtn.disabled = true;
+      }
+    }
+
+    // Connect to Gmail
+    document.getElementById('connectBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/auth/url');
+        const data = await response.json();
+        window.open(data.url, '_blank', 'width=600,height=700');
+
+        // Poll for auth status
+        const pollInterval = setInterval(async () => {
+          await checkAuthStatus();
+          if (isAuthenticated) {
+            clearInterval(pollInterval);
+            showMessage('Successfully connected to Gmail!', 'success');
+          }
+        }, 2000);
+      } catch (error) {
+        showMessage('Failed to connect: ' + error.message, 'error');
+      }
+    });
+
+    // Load reminders
+    async function loadReminders() {
+      try {
+        const response = await fetch('/reminders');
+        const reminders = await response.json();
+
+        // Filter portfolio owners for main table
+        const portfolioOwners = reminders.filter(r => r.role === 'portfolio_owner');
+        const tbody = document.getElementById('reminderTable');
+        tbody.innerHTML = portfolioOwners.map(r => `
+          <tr>
+            <td><strong>${r.name}</strong></td>
+            <td>${r.owner}</td>
+            <td>${r.email}</td>
+            <td><span class="badge ${r.status}">${r.status}</span></td>
+          </tr>
+        `).join('');
+
+        // Filter team members for team table
+        const teamMembers = reminders.filter(r => r.role !== 'portfolio_owner');
+        const teamTbody = document.getElementById('teamTable');
+        const roleLabels = {
+          'chase': 'Chase Team',
+          'reviewer': 'Reviewer',
+          'final': 'Final Report'
+        };
+        teamTbody.innerHTML = teamMembers.map(r => `
+          <tr>
+            <td><strong>${r.owner}</strong></td>
+            <td>${roleLabels[r.role] || r.role}</td>
+            <td>${r.email}</td>
+            <td><span class="badge ${r.status}">${r.status}</span></td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Error loading reminders:', error);
+      }
+    }
+
+    // Test button handlers
+    async function testNotification(endpoint, btnId, label) {
+      const btn = document.getElementById(btnId);
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<div class="btn-label">Sending...</div>';
+
+      try {
+        const response = await fetch(endpoint, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(`${label} sent successfully!`, 'success');
+        } else {
+          showMessage(`Failed to send: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        setTimeout(() => loadReminders(), 1000);
+      }
+    }
+
+    document.getElementById('testOwnerBtn').addEventListener('click', () => {
+      testNotification('/send-test-reminder', 'testOwnerBtn', 'Owner reminders');
+    });
+
+    document.getElementById('testChaseBtn').addEventListener('click', () => {
+      testNotification('/send-test-chase', 'testChaseBtn', 'Chase notification');
+    });
+
+    document.getElementById('testReviewBtn').addEventListener('click', () => {
+      testNotification('/send-test-review', 'testReviewBtn', 'Review notification');
+    });
+
+    document.getElementById('testFinalBtn').addEventListener('click', () => {
+      testNotification('/send-test-final', 'testFinalBtn', 'Final report');
+    });
+
+    // Reset reminders
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      if (!confirm('Reset all reminders to pending status?')) return;
+
+      try {
+        const response = await fetch('/reset-reminders', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage('All reminders reset to pending', 'success');
+          loadReminders();
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
+    });
+
+    // Show message
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type} show`;
+
+      setTimeout(() => {
+        messageDiv.className = 'message';
+      }, 5000);
+    }
+
+    // Auto-refresh reminders every 10 seconds
+    setInterval(() => {
+      if (isAuthenticated) {
+        loadReminders();
+      }
+    }, 10000);
+
+    // Initialize
+    checkAuthStatus();
+  </script>
+</body>
+</html>

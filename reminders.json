@@ -1,0 +1,66 @@
+[
+  {
+    "id": "pf",
+    "name": "PacketFabric",
+    "owner": "Matt",
+    "email": "dev@digitalalpha.ai",
+    "role": "portfolio_owner",
+    "status": "complete"
+  },
+  {
+    "id": "qwilt",
+    "name": "Qwilt",
+    "owner": "Ram",
+    "email": "dev@digitalalpha.ai",
+    "role": "portfolio_owner",
+    "status": "complete"
+  },
+  {
+    "id": "element8",
+    "name": "Element8",
+    "owner": "Galen",
+    "email": "dev@digitalalpha.ai",
+    "role": "portfolio_owner",
+    "status": "pending"
+  },
+  {
+    "id": "matt_chase",
+    "name": "Matt",
+    "owner": "Matt",
+    "email": "matt@digitalalpha.ai",
+    "role": "chase",
+    "status": "active"
+  },
+  {
+    "id": "ivan_chase",
+    "name": "Ivan",
+    "owner": "Ivan",
+    "email": "ivan@digitalalpha.ai",
+    "role": "chase",
+    "status": "active"
+  },
+  {
+    "id": "neil_reviewer",
+    "name": "Neil",
+    "owner": "Neil",
+    "email": "neil@digitalalpha.ai",
+    "role": "reviewer",
+    "status": "active"
+  },
+  {
+    "id": "karl_reviewer",
+    "name": "Karl",
+    "owner": "Karl",
+    "email": "karl@digitalalpha.ai",
+    "role": "reviewer",
+    "status": "active"
+  },
+  {
+    "id": "rick_final",
+    "name": "Rick",
+    "owner": "Rick",
+    "email": "rick@digitalalpha.ai",
+    "role": "final",
+    "status": "active"
+  }
+]
