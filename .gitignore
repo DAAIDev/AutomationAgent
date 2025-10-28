@@ -1,5 +1,7 @@
 node_modules/
 .env
 tokens.json
+box-tokens.json
+box-config.json
 .DS_Store
 *.log

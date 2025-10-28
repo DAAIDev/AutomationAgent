@@ -5,7 +5,8 @@
     "owner": "Matt",
     "email": "dev@digitalalpha.ai",
     "role": "portfolio_owner",
-    "status": "complete"
+    "status": "pending",
+    "lastUpdated": null
   },
   {
     "id": "qwilt",
@@ -13,7 +14,8 @@
     "owner": "Ram",
     "email": "dev@digitalalpha.ai",
     "role": "portfolio_owner",
-    "status": "complete"
+    "status": "pending",
+    "lastUpdated": null
   },
   {
     "id": "element8",
@@ -21,7 +23,17 @@
     "owner": "Galen",
     "email": "dev@digitalalpha.ai",
     "role": "portfolio_owner",
-    "status": "pending"
+    "status": "pending",
+    "lastUpdated": null
+  },
+  {
+    "id": "test-arce",
+    "name": "Test Company - Chris Arce",
+    "owner": "Chris Arce",
+    "email": "chris@digitalalpha.ai",
+    "status": "pending",
+    "role": "portfolio_owner",
+    "lastUpdated": null
   },
   {
     "id": "matt_chase",

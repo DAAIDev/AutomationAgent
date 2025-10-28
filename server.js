@@ -1,9 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const { google } = require('googleapis');
+const BoxSDK = require('box-node-sdk').default;
 const cors = require('cors');
 const cron = require('node-cron');
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
 
 const app = express();
@@ -23,8 +25,54 @@ const oauth2Client = new google.auth.OAuth2(
 // Store tokens in memory
 let tokens = null;
 
+// Box token store implementation
+const tokenStore = {
+  read: (callback) => {
+    try {
+      if (fsSync.existsSync('box-tokens.json')) {
+        const tokens = JSON.parse(fsSync.readFileSync('box-tokens.json', 'utf8'));
+        callback(null, tokens);
+      } else {
+        callback(null, {});
+      }
+    } catch (error) {
+      callback(error);
+    }
+  },
+  write: (tokens, callback) => {
+    try {
+      fsSync.writeFileSync('box-tokens.json', JSON.stringify(tokens, null, 2));
+      callback(null);
+    } catch (error) {
+      callback(error);
+    }
+  },
+  clear: (callback) => {
+    try {
+      if (fsSync.existsSync('box-tokens.json')) {
+        fsSync.unlinkSync('box-tokens.json');
+      }
+      callback(null);
+    } catch (error) {
+      callback(error);
+    }
+  }
+};
+
+// Box SDK Setup
+const boxSDK = new BoxSDK({
+  clientID: process.env.BOX_CLIENT_ID,
+  clientSecret: process.env.BOX_CLIENT_SECRET
+});
+
+// Store Box tokens in memory
+let boxTokens = null;
+let boxClient = null;
+
 // Token persistence functions
 const TOKENS_FILE = path.join(__dirname, 'tokens.json');
+const BOX_TOKENS_FILE = path.join(__dirname, 'box-tokens.json');
+const BOX_CONFIG_FILE = path.join(__dirname, 'box-config.json');
 
 async function saveTokens(tokenData) {
   try {
@@ -67,6 +115,49 @@ async function refreshTokensIfNeeded() {
     }
   }
   return true;
+}
+
+// Box token persistence functions
+async function saveBoxTokens(tokenData) {
+  try {
+    await fs.writeFile(BOX_TOKENS_FILE, JSON.stringify(tokenData, null, 2));
+    console.log('[OK] Box tokens saved');
+  } catch (error) {
+    console.error('Error saving Box tokens:', error);
+  }
+}
+
+async function loadBoxTokens() {
+  try {
+    const data = await fs.readFile(BOX_TOKENS_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Error loading Box tokens:', error);
+    }
+    return null;
+  }
+}
+
+async function saveBoxConfig(config) {
+  try {
+    await fs.writeFile(BOX_CONFIG_FILE, JSON.stringify(config, null, 2));
+    console.log('[OK] Box config saved');
+  } catch (error) {
+    console.error('Error saving Box config:', error);
+  }
+}
+
+async function loadBoxConfig() {
+  try {
+    const data = await fs.readFile(BOX_CONFIG_FILE, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error('Error loading Box config:', error);
+    }
+    return null;
+  }
 }
 
 // Generate auth URL
@@ -117,6 +208,52 @@ app.get('/oauth2callback', async (req, res) => {
 // Check auth status
 app.get('/auth/status', (req, res) => {
   res.json({ authenticated: !!tokens });
+});
+
+// Box OAuth endpoints
+app.get('/auth/box/url', (req, res) => {
+  const authUrl = `https://account.box.com/api/oauth2/authorize?response_type=code&client_id=${process.env.BOX_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.BOX_REDIRECT_URI)}`;
+  res.json({ url: authUrl });
+});
+
+app.get('/auth/box/callback', async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).send('Authorization code not provided');
+  }
+
+  try {
+    const tokenResponse = await boxSDK.getTokensAuthorizationCodeGrant(code);
+    boxTokens = tokenResponse;
+
+    // Create Box client with token store
+    boxClient = boxSDK.getPersistentClient(boxTokens, tokenStore);
+
+    await saveBoxTokens(boxTokens);
+
+    res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body>
+          <h2>[SUCCESS] Successfully connected to Box!</h2>
+          <p>You can close this window and return to the app.</p>
+          <script>
+            setTimeout(() => window.close(), 2000);
+          </script>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error getting Box tokens:', error);
+    res.status(500).send('Box authentication failed: ' + error.message);
+  }
+});
+
+app.get('/auth/box/status', (req, res) => {
+  res.json({ authenticated: !!boxTokens });
 });
 
 // Load reminders from file
@@ -186,9 +323,28 @@ async function sendReminders() {
     return;
   }
 
-  for (const reminder of portfolioOwners) {
+  // Filter out owners who updated within the last 7 days
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const needsReminder = portfolioOwners.filter(reminder => {
+    if (!reminder.lastUpdated) {
+      return true; // Never updated, needs reminder
+    }
+    const lastUpdate = new Date(reminder.lastUpdated);
+    return lastUpdate < sevenDaysAgo; // Updated more than 7 days ago
+  });
+
+  if (needsReminder.length === 0) {
+    console.log('All portfolio owners have updated within the last 7 days');
+    return;
+  }
+
+  console.log(`Sending reminders to ${needsReminder.length} of ${portfolioOwners.length} pending owners`);
+
+  for (const reminder of needsReminder) {
     try {
-      const subject = `Reminder: ${reminder.name} Portfolio Update`;
+      const subject = `Action Required: Update ${reminder.name} Section in Tracker`;
       const body = `
         <html>
           <head>
@@ -197,14 +353,20 @@ async function sendReminders() {
           <body style="font-family: Arial, sans-serif; padding: 20px;">
             <h2>Portfolio Update Reminder</h2>
             <p>Hi ${reminder.owner},</p>
-            <p>This is your reminder to provide an update for <strong>${reminder.name}</strong>.</p>
-            <p>
-              <a href="http://localhost:${PORT}/complete/${reminder.id}"
-                 style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
-                Mark as Complete
+            <p>Please update your section for <strong>${reminder.name}</strong> in the Box tracker file.</p>
+            <p style="margin: 20px 0;">
+              <a href="https://app.box.com/file/2026687257037"
+                 style="background-color: #0061D5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;">
+                Open Tracker in Box
               </a>
             </p>
-            <p>Thank you!</p>
+            <p style="color: #666; font-size: 14px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+              If you have already updated and believe you are receiving this email in error,
+              <a href="http://localhost:${PORT}/complete/${reminder.id}" style="color: #0061D5;">click here to mark as complete</a>.
+            </p>
+            <p style="color: #999; font-size: 12px; margin-top: 20px;">
+              Note: Updates made in Box are automatically tracked. This link is only needed if you've already completed your update.
+            </p>
           </body>
         </html>
       `;
@@ -537,6 +699,7 @@ app.get('/complete/:id', async (req, res) => {
 
     // Mark as complete
     reminder.status = 'complete';
+    reminder.lastUpdated = new Date().toISOString();
     await saveReminders(reminders);
 
     // Send notification
@@ -597,11 +760,181 @@ app.post('/reset-reminders', async (req, res) => {
   }
 });
 
+// Reset week - clear status and lastUpdated for all portfolio owners
+app.post('/reset-week', async (req, res) => {
+  try {
+    const reminders = await loadReminders();
+    let count = 0;
+    reminders.forEach(r => {
+      if (r.role === 'portfolio_owner') {
+        r.status = 'pending';
+        r.lastUpdated = null;
+        delete r.completedAt;
+        delete r.completedBy;
+        delete r.completedVia;
+        count++;
+      }
+    });
+    await saveReminders(reminders);
+    res.json({
+      success: true,
+      message: `Reset ${count} portfolio owners for new week`,
+      count
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Box file monitoring endpoints
+app.post('/box/set-file', async (req, res) => {
+  try {
+    const { fileId } = req.body;
+
+    if (!fileId) {
+      return res.status(400).json({ error: 'File ID is required' });
+    }
+
+    if (!boxClient) {
+      return res.status(401).json({ error: 'Not authenticated with Box' });
+    }
+
+    // Test access to the file
+    try {
+      const file = await boxClient.files.get(fileId);
+      console.log('[OK] Box file access verified:', file.name);
+    } catch (error) {
+      console.error('Error accessing Box file:', error);
+      return res.status(400).json({ error: 'Cannot access file. Check file ID and permissions.' });
+    }
+
+    // Save file ID and initial state
+    const config = {
+      fileId,
+      lastChecked: new Date().toISOString(),
+      lastModified: null
+    };
+
+    await saveBoxConfig(config);
+    res.json({ success: true, message: 'Box file monitoring configured', fileId });
+  } catch (error) {
+    console.error('Error setting Box file:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/box/config', async (req, res) => {
+  try {
+    const config = await loadBoxConfig();
+    res.json(config || { fileId: null });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Check Box file for changes
+async function checkBoxFileChanges() {
+  if (!boxClient) {
+    console.log('[SKIP] Box file check - not authenticated');
+    return;
+  }
+
+  const config = await loadBoxConfig();
+  if (!config || !config.fileId) {
+    console.log('[SKIP] Box file check - no file configured');
+    return;
+  }
+
+  try {
+    const file = await boxClient.files.get(config.fileId, { fields: 'modified_at,modified_by,name' });
+    const currentModified = file.modified_at;
+
+    console.log(`[BOX] Checking file: ${file.name}`);
+    console.log(`[BOX] Last modified: ${currentModified}`);
+
+    // Check if file was modified since last check
+    if (config.lastModified && currentModified !== config.lastModified) {
+      console.log(`[BOX] File changed! Previous: ${config.lastModified}, Current: ${currentModified}`);
+
+      const modifier = file.modified_by ? file.modified_by.name : 'Unknown';
+      console.log(`[BOX] Modified by: ${modifier}`);
+
+      // Find matching reminder by name and mark as complete
+      const reminders = await loadReminders();
+      let updated = false;
+
+      for (const reminder of reminders) {
+        if (reminder.role === 'portfolio_owner' && reminder.status === 'pending') {
+          // Check if the modifier name matches the owner name (case-insensitive)
+          if (modifier.toLowerCase().includes(reminder.owner.toLowerCase()) ||
+              reminder.owner.toLowerCase().includes(modifier.toLowerCase())) {
+            const timestamp = new Date().toISOString();
+            reminder.status = 'complete';
+            reminder.completedAt = timestamp;
+            reminder.completedBy = modifier;
+            reminder.completedVia = 'box';
+            reminder.lastUpdated = timestamp;
+            console.log(`[OK] Auto-completed reminder for ${reminder.owner} (${reminder.name})`);
+            updated = true;
+
+            // Send notification
+            try {
+              if (tokens) {
+                const subject = `[Auto-Complete] ${reminder.name} Update Completed via Box`;
+                const body = `
+                  <html>
+                    <head>
+                      <meta charset="UTF-8">
+                    </head>
+                    <body style="font-family: Arial, sans-serif; padding: 20px;">
+                      <h2>Update Auto-Completed</h2>
+                      <p><strong>${reminder.owner}</strong> has updated their section for <strong>${reminder.name}</strong> in Box.</p>
+                      <p><strong>Modified by:</strong> ${modifier}</p>
+                      <p><strong>Time:</strong> ${new Date(currentModified).toLocaleString()}</p>
+                      <p style="color: #666; font-size: 14px; margin-top: 20px;">This update was automatically detected via Box file monitoring.</p>
+                    </body>
+                  </html>
+                `;
+                await sendEmail('dev@digitalalpha.ai', subject, body);
+              }
+            } catch (emailError) {
+              console.error('Failed to send notification:', emailError);
+            }
+          }
+        }
+      }
+
+      if (updated) {
+        await saveReminders(reminders);
+      } else {
+        console.log(`[INFO] File modified by ${modifier}, but no matching pending reminder found`);
+      }
+    } else if (!config.lastModified) {
+      console.log('[BOX] Initial file state captured');
+    } else {
+      console.log('[BOX] No changes detected');
+    }
+
+    // Update config with latest check time and modification time
+    config.lastChecked = new Date().toISOString();
+    config.lastModified = currentModified;
+    await saveBoxConfig(config);
+
+  } catch (error) {
+    console.error('[ERROR] Box file check failed:', error.message);
+  }
+}
+
+// Schedule Box file monitoring (every 5 minutes)
+cron.schedule('*/5 * * * *', () => {
+  checkBoxFileChanges();
+});
+
 // Initialize tokens on startup
 async function initializeServer() {
   console.log('\n🔄 Initializing server...');
 
-  // Try to load existing tokens
+  // Try to load existing Gmail tokens
   const savedTokens = await loadTokens();
   if (savedTokens) {
     tokens = savedTokens;
@@ -616,6 +949,22 @@ async function initializeServer() {
     }
   } else {
     console.log('[WARNING] No saved tokens found. Please authenticate with Gmail.');
+  }
+
+  // Try to load existing Box tokens
+  const savedBoxTokens = await loadBoxTokens();
+  if (savedBoxTokens) {
+    boxTokens = savedBoxTokens;
+    boxClient = boxSDK.getPersistentClient(boxTokens, tokenStore);
+    console.log('[OK] Loaded existing Box authentication');
+  } else {
+    console.log('[WARNING] No Box tokens found. Please authenticate with Box.');
+  }
+
+  // Load Box config if available
+  const boxConfig = await loadBoxConfig();
+  if (boxConfig && boxConfig.fileId) {
+    console.log(`[OK] Box monitoring configured for file ID: ${boxConfig.fileId}`);
   }
 
   console.log(`\n[SERVER] Portfolio Reminder System running on http://localhost:${PORT}`);

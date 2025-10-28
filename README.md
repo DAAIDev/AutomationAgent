@@ -1,176 +1,207 @@
-# Portfolio Reminder System
+# Portfolio Tracker Reminder System
 
-An automated email reminder system for weekly portfolio tracking updates using Gmail API and cron scheduling.
+An automated system that monitors your investment portfolio and sends intelligent email reminders when it's time to review positions. Helps you avoid emotional decision-making by enforcing a disciplined review schedule.
 
 ## Features
 
-- **Automated Email Reminders**: Send scheduled reminders to portfolio owners
-- **Chase Notifications**: Alert team members about pending updates
-- **Review Reports**: Provide status updates to reviewers
-- **Final Reports**: Compile complete weekly summary
-- **Two Operating Modes**: TEST and PRODUCTION for different scheduling needs
+- **Automated Email Reminders**: Sends Gmail reminders when portfolio positions are due for review
+- **Intelligent Time Windows**: Only sends reminders during business hours (9 AM - 5 PM, Monday-Friday)
+- **Flexible Scheduling**: Configure initial wait periods (e.g., 90 days) and subsequent reminder intervals (e.g., 30 days)
+- **Gmail Integration**: Secure OAuth2 authentication with Gmail API
+- **Test Mode**: Test the system without actually sending emails
+- **Web Dashboard**: Simple web interface to monitor reminders and system status
+- **JSON-based Configuration**: Easy-to-manage reminder data stored in `reminders.json`
 
-## Setup
+## Setup Instructions
 
 ### Prerequisites
 
 - Node.js (v14 or higher)
-- Gmail account with API access
-- Google Cloud Console project with Gmail API enabled
+- A Google Cloud Project with Gmail API enabled
+- Gmail account for sending reminders
 
-### Installation
+### 1. Install Dependencies
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Configure environment variables in `.env`:
-   ```
-   GOOGLE_CLIENT_ID=your_client_id
-   GOOGLE_CLIENT_SECRET=your_client_secret
-   REDIRECT_URI=http://localhost:3001/oauth2callback
-   PORT=3001
-   MODE=TEST
-   ```
-
-4. Create `reminders.json` with your team configuration:
-   ```json
-   [
-     {
-       "id": "unique-id",
-       "name": "Portfolio Name",
-       "owner": "Owner Name",
-       "email": "owner@example.com",
-       "role": "portfolio_owner",
-       "status": "pending"
-     }
-   ]
-   ```
-
-### Gmail Authentication
-
-1. Start the server:
-   ```bash
-   node server.js
-   ```
-
-2. Open browser to `http://localhost:3001`
-3. Click "Connect Gmail" and authorize the application
-4. Authentication tokens are saved and persist across restarts
-
-## Operating Modes
-
-### TEST Mode (Default)
-
-**Use for**: Development, testing, demonstrations
-
-Set in `.env`:
-```
-MODE=TEST
+```bash
+npm install
 ```
 
-**Schedule**:
-- Every 2 minutes: Owner Reminders
-- Every 1 minute: Follow-up Reminders
-- Every 4 minutes: Chase Notification
-- Every 6 minutes: Review Notification
-- Every 8 minutes: Final Report
+### 2. Set Up Google Cloud Project
 
-### PRODUCTION Mode
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable the Gmail API:
+   - Navigate to "APIs & Services" > "Library"
+   - Search for "Gmail API"
+   - Click "Enable"
+4. Create OAuth 2.0 credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Choose "Desktop app" as application type
+   - Download the credentials JSON file
 
-**Use for**: Live deployment, actual weekly tracking
+### 3. Configure Environment Variables
 
-Set in `.env`:
+Create a `.env` file in the project root:
+
+```env
+# Gmail OAuth2 Credentials (from Google Cloud Console)
+GMAIL_CLIENT_ID=your_client_id_here
+GMAIL_CLIENT_SECRET=your_client_secret_here
+GMAIL_REDIRECT_URI=http://localhost:3000/oauth2callback
+
+# Email Configuration
+RECIPIENT_EMAIL=your_email@example.com
+
+# Reminder Configuration (in days)
+INITIAL_WAIT_DAYS=90
+SUBSEQUENT_WAIT_DAYS=30
+
+# Test Mode (set to true to avoid sending actual emails)
+TEST_MODE=false
+
+# Server Configuration
+PORT=3000
 ```
-MODE=PRODUCTION
+
+### 4. Authenticate with Gmail
+
+On first run, the system will:
+1. Open a browser window for Gmail authentication
+2. Ask you to authorize the application
+3. Save the authentication tokens to `tokens.json`
+
+The tokens will be automatically refreshed when needed.
+
+### 5. Configure Portfolio Reminders
+
+Edit `reminders.json` to add your portfolio positions:
+
+```json
+[
+  {
+    "ticker": "AAPL",
+    "company": "Apple Inc.",
+    "lastSent": null,
+    "initialWaitDays": 90,
+    "subsequentWaitDays": 30
+  },
+  {
+    "ticker": "GOOGL",
+    "company": "Alphabet Inc.",
+    "lastSent": null,
+    "initialWaitDays": 90,
+    "subsequentWaitDays": 30
+  }
+]
 ```
 
-**Schedule**:
-- **Wednesday 9 AM**: Initial reminders to portfolio owners
-- **Wed-Thu 9 AM-5 PM (hourly)**: Follow-up reminders to portfolio owners
-- **Thursday 9 AM**: Chase notification to Matt & Ivan
-- **Thursday 4 PM**: Review notification to Neil & Karl
-- **Friday 12 PM**: Final report to Rick
+## How to Run
 
-## Deployment
+### Production Mode
 
-⚠️ **IMPORTANT**: When deploying to production:
+```bash
+node server.js
+```
 
-1. Update `.env` file:
-   ```
-   MODE=PRODUCTION
-   ```
+The system will:
+- Check for due reminders every hour
+- Send emails only during business hours (9 AM - 5 PM, Mon-Fri)
+- Update `reminders.json` with timestamps when emails are sent
 
-2. Verify all email addresses in `reminders.json`
-3. Test authentication with Gmail
-4. Restart the server to apply changes
+### Test Mode
 
-## API Endpoints
+Set `TEST_MODE=true` in `.env` to test without sending actual emails:
 
-### Authentication
-- `GET /auth/url` - Get Gmail authorization URL
-- `GET /oauth2callback` - OAuth callback handler
-- `GET /auth/status` - Check authentication status
+```bash
+TEST_MODE=true node server.js
+```
 
-### Reminders
-- `GET /reminders` - Get all reminders
-- `GET /complete/:id` - Mark reminder as complete
-- `POST /reset-reminders` - Reset all to pending
+In test mode:
+- The system logs what emails *would* be sent
+- No actual emails are sent via Gmail
+- Useful for testing scheduling logic and configuration
 
-### Manual Testing
-- `POST /send-test-reminder` - Send owner reminders
-- `POST /send-test-chase` - Send chase notification
-- `POST /send-test-review` - Send review notification
-- `POST /send-test-final` - Send final report
+### Access the Dashboard
 
-## Project Structure
+Open your browser and navigate to:
+```
+http://localhost:3000
+```
+
+The dashboard shows:
+- Current reminder status for each position
+- Days until next reminder
+- System configuration
+- Recent activity log
+
+## Workflow Explanation
+
+### Initial Setup
+1. Add positions to `reminders.json` with `lastSent: null`
+2. System waits for the initial wait period (default: 90 days)
+3. First reminder is sent after initial wait expires
+
+### Subsequent Reminders
+1. After first reminder, `lastSent` is updated with timestamp
+2. System calculates next reminder based on `subsequentWaitDays` (default: 30 days)
+3. Process repeats indefinitely
+
+### Business Hours Logic
+- Reminders are only sent Monday-Friday, 9 AM - 5 PM
+- If a reminder is due outside business hours, it waits until the next valid time window
+- Prevents weekend/night-time email disruptions
+
+### Email Content
+Each reminder email includes:
+- Position ticker and company name
+- Prompt to review the investment
+- Encourages discipline and rational decision-making
+- Simple, professional format
+
+## File Structure
 
 ```
 portfolio-reminder-system/
-├── server.js           # Main application
-├── public/             # Frontend files
-│   └── index.html      # Admin dashboard
-├── reminders.json      # Team configuration
-├── tokens.json         # Gmail auth tokens (auto-generated)
-├── .env               # Environment configuration
-└── README.md          # This file
+├── server.js           # Main application logic
+├── reminders.json      # Portfolio positions and reminder state
+├── tokens.json         # Gmail OAuth2 tokens (auto-generated)
+├── .env               # Configuration (create this)
+├── .gitignore         # Git ignore rules
+├── package.json       # Node.js dependencies
+└── public/
+    └── index.html     # Web dashboard
 ```
 
-## Roles
+## Security Notes
 
-The system supports four roles in `reminders.json`:
-
-- **portfolio_owner**: Receives initial reminders and follow-ups
-- **chase**: Receives chase notifications (Matt & Ivan)
-- **reviewer**: Receives review notifications (Neil & Karl)
-- **final**: Receives final report (Rick)
+- Never commit `.env` or `tokens.json` to version control
+- Keep your Google Cloud credentials secure
+- Use environment variables for sensitive data
+- Review OAuth2 scopes to ensure minimal permissions
 
 ## Troubleshooting
 
-### Tokens expired
-- Tokens automatically refresh
-- If authentication fails, re-authenticate through the web UI
+### Authentication Issues
+- Delete `tokens.json` and restart to re-authenticate
+- Verify Gmail API is enabled in Google Cloud Console
+- Check OAuth2 credentials are correct in `.env`
 
-### Schedules not running
-- Check `MODE` setting in `.env`
-- Verify server logs for schedule confirmation
-- Ensure server timezone matches expected schedule times
+### Emails Not Sending
+- Verify `TEST_MODE=false` in `.env`
+- Check current time is within business hours
+- Review console logs for errors
+- Confirm `RECIPIENT_EMAIL` is correct
 
-### Emails not sending
-- Verify Gmail authentication status at `/auth/status`
-- Check console logs for specific error messages
-- Ensure Gmail API quotas aren't exceeded
-
-## Development
-
-Run in development mode with nodemon:
-```bash
-npm install -g nodemon
-nodemon server.js
-```
+### Reminders Not Triggering
+- Check `reminders.json` for valid dates
+- Verify wait periods are configured correctly
+- System checks every hour - be patient for next check cycle
 
 ## License
 
 MIT
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!

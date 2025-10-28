@@ -261,9 +261,33 @@
       <div class="auth-section">
         <div id="authStatus" class="status disconnected">
           <span id="statusIcon">●</span>
-          <span id="statusText">Not Connected</span>
+          <span id="statusText">Gmail: Not Connected</span>
         </div>
         <button id="connectBtn" class="btn">Connect with Gmail</button>
+      </div>
+
+      <div class="auth-section" style="border-top: none; padding-top: 10px;">
+        <div id="boxAuthStatus" class="status disconnected">
+          <span id="boxStatusIcon">●</span>
+          <span id="boxStatusText">Box: Not Connected</span>
+        </div>
+        <button id="connectBoxBtn" class="btn">Connect to Box</button>
+      </div>
+
+      <div id="boxFileSection" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; display: none;">
+        <h3 style="color: #333; margin-bottom: 10px;">Box File Monitoring</h3>
+        <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+          Enter the Box file ID to monitor for changes (checks every 5 minutes)
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" id="boxFileId" placeholder="2026687257037"
+                 style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+          <button id="setBoxFileBtn" class="btn">Set File to Monitor</button>
+        </div>
+        <div id="boxFileInfo" style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 13px; display: none;">
+          <div><strong>Monitoring:</strong> <span id="currentFileId">-</span></div>
+          <div><strong>Last checked:</strong> <span id="lastChecked">-</span></div>
+        </div>
       </div>
 
       <div id="message" class="message"></div>
@@ -273,6 +297,7 @@
       <div class="dashboard-header">
         <h2>Portfolio Companies</h2>
         <div class="actions">
+          <button id="resetWeekBtn" class="btn" style="background: #ff9800;">Reset Week</button>
           <button id="resetBtn" class="btn reset">Reset All to Pending</button>
         </div>
       </div>
@@ -283,12 +308,13 @@
             <th>Company</th>
             <th>Owner</th>
             <th>Email</th>
+            <th>Last Updated</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="reminderTable">
           <tr>
-            <td colspan="4" style="text-align: center; color: #999;">Loading...</td>
+            <td colspan="5" style="text-align: center; color: #999;">Loading...</td>
           </tr>
         </tbody>
       </table>
@@ -347,6 +373,7 @@
 
   <script>
     let isAuthenticated = false;
+    let isBoxAuthenticated = false;
 
     // Check auth status on load
     async function checkAuthStatus() {
@@ -360,6 +387,21 @@
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
+      }
+    }
+
+    // Check Box auth status
+    async function checkBoxAuthStatus() {
+      try {
+        const response = await fetch('/auth/box/status');
+        const data = await response.json();
+        isBoxAuthenticated = data.authenticated;
+        updateBoxAuthUI();
+        if (isBoxAuthenticated) {
+          loadBoxConfig();
+        }
+      } catch (error) {
+        console.error('Error checking Box auth status:', error);
       }
     }
 
@@ -377,7 +419,7 @@
       if (isAuthenticated) {
         statusDiv.className = 'status connected';
         statusIcon.textContent = '✓';
-        statusText.textContent = 'Connected to Gmail';
+        statusText.textContent = 'Gmail: Connected';
         connectBtn.style.display = 'none';
         testOwnerBtn.disabled = false;
         testChaseBtn.disabled = false;
@@ -386,12 +428,35 @@
       } else {
         statusDiv.className = 'status disconnected';
         statusIcon.textContent = '●';
-        statusText.textContent = 'Not Connected';
+        statusText.textContent = 'Gmail: Not Connected';
         connectBtn.style.display = 'inline-block';
         testOwnerBtn.disabled = true;
         testChaseBtn.disabled = true;
         testReviewBtn.disabled = true;
         testFinalBtn.disabled = true;
+      }
+    }
+
+    // Update Box auth UI
+    function updateBoxAuthUI() {
+      const statusDiv = document.getElementById('boxAuthStatus');
+      const statusIcon = document.getElementById('boxStatusIcon');
+      const statusText = document.getElementById('boxStatusText');
+      const connectBtn = document.getElementById('connectBoxBtn');
+      const fileSection = document.getElementById('boxFileSection');
+
+      if (isBoxAuthenticated) {
+        statusDiv.className = 'status connected';
+        statusIcon.textContent = '✓';
+        statusText.textContent = 'Box: Connected';
+        connectBtn.style.display = 'none';
+        fileSection.style.display = 'block';
+      } else {
+        statusDiv.className = 'status disconnected';
+        statusIcon.textContent = '●';
+        statusText.textContent = 'Box: Not Connected';
+        connectBtn.style.display = 'inline-block';
+        fileSection.style.display = 'none';
       }
     }
 
@@ -415,6 +480,113 @@
       }
     });
 
+    // Connect to Box
+    document.getElementById('connectBoxBtn').addEventListener('click', async () => {
+      try {
+        const response = await fetch('/auth/box/url');
+        const data = await response.json();
+        window.open(data.url, '_blank', 'width=600,height=700');
+
+        // Poll for auth status
+        const pollInterval = setInterval(async () => {
+          await checkBoxAuthStatus();
+          if (isBoxAuthenticated) {
+            clearInterval(pollInterval);
+            showMessage('Successfully connected to Box!', 'success');
+          }
+        }, 2000);
+      } catch (error) {
+        showMessage('Failed to connect to Box: ' + error.message, 'error');
+      }
+    });
+
+    // Load Box config
+    async function loadBoxConfig() {
+      try {
+        const response = await fetch('/box/config');
+        const config = await response.json();
+
+        if (config && config.fileId) {
+          document.getElementById('boxFileId').value = config.fileId;
+          document.getElementById('boxFileInfo').style.display = 'block';
+          document.getElementById('currentFileId').textContent = config.fileId;
+          document.getElementById('lastChecked').textContent = config.lastChecked
+            ? new Date(config.lastChecked).toLocaleString()
+            : 'Never';
+        }
+      } catch (error) {
+        console.error('Error loading Box config:', error);
+      }
+    }
+
+    // Set Box file to monitor
+    document.getElementById('setBoxFileBtn').addEventListener('click', async () => {
+      const fileId = document.getElementById('boxFileId').value.trim();
+
+      if (!fileId) {
+        showMessage('Please enter a file ID', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/box/set-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage('Box file monitoring configured!', 'success');
+          loadBoxConfig();
+        } else {
+          showMessage('Error: ' + data.error, 'error');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
+    });
+
+    // Format lastUpdated timestamp
+    function formatLastUpdated(timestamp) {
+      if (!timestamp) {
+        return { text: 'Never', color: '#999' };
+      }
+
+      const now = new Date();
+      const updated = new Date(timestamp);
+      const diffMs = now - updated;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+      let text = '';
+      let color = '#28a745'; // Green for recent
+
+      if (diffMinutes < 60) {
+        text = `${diffMinutes} min${diffMinutes !== 1 ? 's' : ''} ago`;
+        color = '#28a745';
+      } else if (diffHours < 24) {
+        text = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        color = '#28a745';
+      } else if (diffDays === 0) {
+        text = 'Today';
+        color = '#28a745';
+      } else if (diffDays === 1) {
+        text = 'Yesterday';
+        color = '#28a745';
+      } else if (diffDays < 7) {
+        text = `${diffDays} days ago`;
+        color = '#ffc107'; // Yellow for 2-6 days
+      } else {
+        text = `${diffDays} days ago`;
+        color = '#dc3545'; // Red for 7+ days
+      }
+
+      return { text, color };
+    }
+
     // Load reminders
     async function loadReminders() {
       try {
@@ -424,14 +596,18 @@
         // Filter portfolio owners for main table
         const portfolioOwners = reminders.filter(r => r.role === 'portfolio_owner');
         const tbody = document.getElementById('reminderTable');
-        tbody.innerHTML = portfolioOwners.map(r => `
-          <tr>
-            <td><strong>${r.name}</strong></td>
-            <td>${r.owner}</td>
-            <td>${r.email}</td>
-            <td><span class="badge ${r.status}">${r.status}</span></td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = portfolioOwners.map(r => {
+          const lastUpdated = formatLastUpdated(r.lastUpdated);
+          return `
+            <tr>
+              <td><strong>${r.name}</strong></td>
+              <td>${r.owner}</td>
+              <td>${r.email}</td>
+              <td style="color: ${lastUpdated.color};">${lastUpdated.text}</td>
+              <td><span class="badge ${r.status}">${r.status}</span></td>
+            </tr>
+          `;
+        }).join('');
 
         // Filter team members for team table
         const teamMembers = reminders.filter(r => r.role !== 'portfolio_owner');
@@ -495,6 +671,23 @@
       testNotification('/send-test-final', 'testFinalBtn', 'Final report');
     });
 
+    // Reset week
+    document.getElementById('resetWeekBtn').addEventListener('click', async () => {
+      if (!confirm('Reset all portfolio owners for a new week? This will clear status and lastUpdated timestamps.')) return;
+
+      try {
+        const response = await fetch('/reset-week', { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(`Reset ${data.count} portfolio owners for new week`, 'success');
+          loadReminders();
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
+    });
+
     // Reset reminders
     document.getElementById('resetBtn').addEventListener('click', async () => {
       if (!confirm('Reset all reminders to pending status?')) return;
@@ -528,10 +721,14 @@
       if (isAuthenticated) {
         loadReminders();
       }
+      if (isBoxAuthenticated) {
+        loadBoxConfig();
+      }
     }, 10000);
 
     // Initialize
     checkAuthStatus();
+    checkBoxAuthStatus();
   </script>
 </body>
 </html>
