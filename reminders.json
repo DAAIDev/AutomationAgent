@@ -1,66 +1,144 @@
 [
   {
-    "id": "pf",
-    "name": "PacketFabric",
+    "id": "massed-compute",
+    "name": "Massed Compute",
     "owner": "Matt",
-    "email": "dev@digitalalpha.ai",
-    "role": "portfolio_owner",
-    "status": "complete"
+    "email": "matt@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "sprocket",
+    "name": "Sprocket",
+    "owner": "Ram",
+    "email": "ram@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "packetfabric",
+    "name": "PacketFabric",
+    "owner": "Matt/Shiju",
+    "email": ["matt@dalphafund.com", "shiju@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
   },
   {
     "id": "qwilt",
     "name": "Qwilt",
-    "owner": "Ram",
-    "email": "dev@digitalalpha.ai",
-    "role": "portfolio_owner",
-    "status": "complete"
+    "owner": "Hamad",
+    "email": "hamad@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
   },
   {
     "id": "element8",
     "name": "Element8",
-    "owner": "Galen",
-    "email": "dev@digitalalpha.ai",
-    "role": "portfolio_owner",
-    "status": "pending"
-  },
-  {
-    "id": "matt_chase",
-    "name": "Matt",
     "owner": "Matt",
-    "email": "matt@digitalalpha.ai",
-    "role": "chase",
-    "status": "active"
+    "email": "matt@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
   },
   {
-    "id": "ivan_chase",
+    "id": "dtiq",
+    "name": "DTIQ",
+    "owner": "Ram",
+    "email": "ram@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "welink",
+    "name": "WeLink",
+    "owner": "Ram/Terry",
+    "email": ["ram@dalphafund.com", "terry@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "tarana",
+    "name": "Tarana",
+    "owner": "Neil/Matt",
+    "email": ["neil@dalphafund.com", "matt@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "digital-media",
+    "name": "Digital Media",
+    "owner": "Ram/Shiju",
+    "email": ["ram@dalphafund.com", "shiju@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "quantela",
+    "name": "Quantela",
+    "owner": "Vyom/Shiju",
+    "email": ["vyom@dalphafund.com", "shiju@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "energybox",
+    "name": "Energybox",
+    "owner": "Vyom/Terry",
+    "email": ["vyom@dalphafund.com", "terry@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "cloudian",
+    "name": "Cloudian",
+    "owner": "Hamad",
+    "email": "hamad@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "jetstream",
+    "name": "JetStream",
+    "owner": "Hamad",
+    "email": "hamad@dalphafund.com",
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "pryon",
+    "name": "Pryon",
+    "owner": "Neil/Shiju",
+    "email": ["neil@dalphafund.com", "shiju@dalphafund.com"],
+    "status": "pending",
+    "role": "portfolio_owner"
+  },
+  {
+    "id": "matt",
+    "name": "Matt",
+    "email": "matt@dalphafund.com",
+    "role": "chase"
+  },
+  {
+    "id": "ivan",
     "name": "Ivan",
-    "owner": "Ivan",
-    "email": "ivan@digitalalpha.ai",
-    "role": "chase",
-    "status": "active"
+    "email": "ivan@dalphafund.com",
+    "role": "chase"
   },
   {
-    "id": "neil_reviewer",
+    "id": "neil",
     "name": "Neil",
-    "owner": "Neil",
-    "email": "neil@digitalalpha.ai",
-    "role": "reviewer",
-    "status": "active"
+    "email": "neil@dalphafund.com",
+    "role": "reviewer"
   },
   {
-    "id": "karl_reviewer",
+    "id": "karl",
     "name": "Karl",
-    "owner": "Karl",
-    "email": "karl@digitalalpha.ai",
-    "role": "reviewer",
-    "status": "active"
+    "email": "karl@dalphafund.com",
+    "role": "reviewer"
   },
   {
-    "id": "rick_final",
+    "id": "rick",
     "name": "Rick",
-    "owner": "Rick",
-    "email": "rick@digitalalpha.ai",
-    "role": "final",
-    "status": "active"
+    "email": "rick@dalphafund.com",
+    "role": "final"
   }
 ]

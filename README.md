@@ -69,14 +69,16 @@ An automated email reminder system for weekly portfolio tracking updates using G
 Set in `.env`:
 ```
 MODE=TEST
+TEST_MODE=1
 ```
 
 **Schedule**:
-- Every 2 minutes: Owner Reminders
-- Every 1 minute: Follow-up Reminders
+- Every 2-3 minutes: Owner Reminders
 - Every 4 minutes: Chase Notification
 - Every 6 minutes: Review Notification
 - Every 8 minutes: Final Report
+
+**Email Behavior**: When `TEST_MODE` is set, all emails are redirected to `dev@digitalalpha.ai` regardless of recipient.
 
 ### PRODUCTION Mode
 
@@ -87,12 +89,16 @@ Set in `.env`:
 MODE=PRODUCTION
 ```
 
-**Schedule**:
-- **Wednesday 9 AM**: Initial reminders to portfolio owners
-- **Wed-Thu 9 AM-5 PM (hourly)**: Follow-up reminders to portfolio owners
-- **Thursday 9 AM**: Chase notification to Matt & Ivan
-- **Thursday 4 PM**: Review notification to Neil & Karl
-- **Friday 12 PM**: Final report to Rick
+**Schedule (Pacific Time)**:
+- **Wednesday 3 PM PT**: Owner Reminders
+- **Thursday 3 PM PT**: Owner Reminders
+- **Friday 9 AM PT**: Owner Reminders
+- **Friday 10 AM PT**: Owner Reminders
+- **Friday 11 AM PT**: Owner Reminders
+- **Friday 12 PM PT**: Review notification to Neil & Karl
+- **Friday 5 PM PT**: Final report to Rick
+
+**Email Behavior**: Emails are sent to actual recipients in `reminders.json`
 
 ## Deployment
 
@@ -102,10 +108,23 @@ MODE=PRODUCTION
    ```
    MODE=PRODUCTION
    ```
+   Remove or unset `TEST_MODE` to use actual email addresses
 
 2. Verify all email addresses in `reminders.json`
 3. Test authentication with Gmail
 4. Restart the server to apply changes
+
+## Running the Server
+
+### Testing (emails redirected to dev@digitalalpha.ai)
+```bash
+TEST_MODE=1 node server.js
+```
+
+### Production (actual emails)
+```bash
+node server.js
+```
 
 ## API Endpoints
 
@@ -146,6 +165,26 @@ The system supports four roles in `reminders.json`:
 - **chase**: Receives chase notifications (Matt & Ivan)
 - **reviewer**: Receives review notifications (Neil & Karl)
 - **final**: Receives final report (Rick)
+
+### Multiple Owners Per Company
+
+Companies can have multiple owners. Use an array for the `email` field:
+
+```json
+{
+  "id": "packetfabric",
+  "name": "PacketFabric",
+  "owner": "Matt/Shiju",
+  "email": ["matt@dalphafund.com", "shiju@dalphafund.com"],
+  "status": "pending",
+  "role": "portfolio_owner"
+}
+```
+
+**Behavior**:
+- Reminders are sent to ALL emails in the array
+- When ANY owner clicks "Mark as Complete", the company is marked complete
+- The system tracks which owner completed it
 
 ## Troubleshooting
 

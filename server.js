@@ -148,11 +148,17 @@ async function sendEmail(to, subject, body) {
     throw new Error('Not authenticated with Gmail');
   }
 
+  // Override email in TEST_MODE
+  const actualTo = process.env.TEST_MODE ? 'dev@digitalalpha.ai' : to;
+  if (process.env.TEST_MODE && to !== actualTo) {
+    console.log(`[TEST_MODE] Redirecting email from ${to} to ${actualTo}`);
+  }
+
   oauth2Client.setCredentials(tokens);
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
   const message = [
-    `To: ${to}`,
+    `To: ${actualTo}`,
     'Content-Type: text/html; charset=utf-8',
     'MIME-Version: 1.0',
     `Subject: ${subject}`,
@@ -209,8 +215,12 @@ async function sendReminders() {
         </html>
       `;
 
-      await sendEmail(reminder.email, subject, body);
-      console.log(`[OK] Sent reminder to ${reminder.owner} for ${reminder.name}`);
+      // Handle multiple email addresses
+      const emails = Array.isArray(reminder.email) ? reminder.email : [reminder.email];
+      for (const email of emails) {
+        await sendEmail(email, subject, body);
+        console.log(`[OK] Sent reminder to ${email} for ${reminder.name}`);
+      }
     } catch (error) {
       console.error(`[ERROR] Failed to send reminder for ${reminder.name}:`, error.message);
     }
@@ -391,45 +401,45 @@ async function sendFinalReport() {
 // Schedule notifications based on MODE
 const MODE = process.env.MODE || 'TEST';
 
-// Define schedules
+// Define schedules (Pacific Time converted to UTC)
 const SCHEDULES = {
   TEST: {
-    ownerReminders: '*/2 * * * *',      // Every 2 minutes
-    followUpReminders: '*/1 * * * *',   // Every 1 minute
+    reminders: [
+      '*/2 * * * *',  // Every 2 minutes (for testing)
+      '*/3 * * * *'   // Every 3 minutes (for testing)
+    ],
     chaseNotification: '*/4 * * * *',   // Every 4 minutes
     reviewNotification: '*/6 * * * *',  // Every 6 minutes
     finalReport: '*/8 * * * *'          // Every 8 minutes
   },
   PRODUCTION: {
-    ownerReminders: '0 9 * * 3',        // Wednesday 9 AM
-    followUpReminders: '0 */1 9-17 * * 3-4',  // Wed-Thu 9 AM-5 PM hourly
-    chaseNotification: '0 9 * * 4',     // Thursday 9 AM
-    reviewNotification: '0 16 * * 4',   // Thursday 4 PM
-    finalReport: '0 12 * * 5'           // Friday 12 PM
+    reminders: [
+      '0 22 * * 3',  // Wednesday 3 PM PT (22:00 UTC)
+      '0 22 * * 4',  // Thursday 3 PM PT (22:00 UTC)
+      '0 16 * * 5',  // Friday 9 AM PT (16:00 UTC)
+      '0 17 * * 5',  // Friday 10 AM PT (17:00 UTC)
+      '0 18 * * 5',  // Friday 11 AM PT (18:00 UTC)
+    ],
+    chaseNotification: '0 19 * * 5',    // Friday 12 PM PT (19:00 UTC) - Neil/Karl review
+    reviewNotification: '0 19 * * 5',   // Friday 12 PM PT (19:00 UTC) - Neil/Karl review
+    finalReport: '1 0 * * 6'            // Friday 5 PM PT (00:01 UTC Saturday) - Rick final
   }
 };
 
 const schedule = SCHEDULES[MODE] || SCHEDULES.TEST;
 
-// Stage 1: Wednesday 9 AM - Initial reminders to portfolio owners
-cron.schedule(schedule.ownerReminders, () => {
-  if (tokens) {
-    sendReminders();
-  } else {
-    console.log('[SKIP] Owner reminders - not authenticated');
-  }
+// Schedule reminders at multiple times
+schedule.reminders.forEach((cronTime, index) => {
+  cron.schedule(cronTime, () => {
+    if (tokens) {
+      sendReminders();
+    } else {
+      console.log('[SKIP] Owner reminders - not authenticated');
+    }
+  });
 });
 
-// Stage 1.5: Wednesday-Thursday 9 AM-5 PM - Follow-up reminders every hour
-cron.schedule(schedule.followUpReminders, () => {
-  if (tokens) {
-    sendReminders();
-  } else {
-    console.log('[SKIP] Follow-up reminders - not authenticated');
-  }
-});
-
-// Stage 2: Thursday 9 AM - Chase notification to Matt and Ivan
+// Chase notification
 cron.schedule(schedule.chaseNotification, () => {
   if (tokens) {
     sendChaseNotification();
@@ -438,7 +448,7 @@ cron.schedule(schedule.chaseNotification, () => {
   }
 });
 
-// Stage 3: Thursday 4 PM - Review notification to Neil and Karl
+// Review notification
 cron.schedule(schedule.reviewNotification, () => {
   if (tokens) {
     sendReviewNotification();
@@ -447,7 +457,7 @@ cron.schedule(schedule.reviewNotification, () => {
   }
 });
 
-// Stage 4: Friday 12 PM - Final report to Rick
+// Final report
 cron.schedule(schedule.finalReport, () => {
   if (tokens) {
     sendFinalReport();
@@ -621,20 +631,28 @@ async function initializeServer() {
   console.log(`\n[SERVER] Portfolio Reminder System running on http://localhost:${PORT}`);
   console.log(`\n[MODE] Running in ${MODE} mode`);
 
+  // Log TEST_MODE status
+  if (process.env.TEST_MODE) {
+    console.log('🧪 TEST MODE ACTIVE - All emails redirecting to dev@digitalalpha.ai');
+  } else {
+    console.log('✅ PRODUCTION MODE - Using actual email addresses');
+  }
+
   if (MODE === 'TEST') {
     console.log(`\n[SCHEDULE] Weekly Notification Timeline (TEST Mode - Short Intervals):`);
-    console.log(`  - Every 2 mins: Owner Reminders (Wed 9 AM in production)`);
-    console.log(`  - Every 1 min: Follow-up Reminders (Wed-Thu 9 AM-5 PM in production)`);
-    console.log(`  - Every 4 mins: Chase Notification to Matt & Ivan (Thu 9 AM in production)`);
-    console.log(`  - Every 6 mins: Review Notification to Neil & Karl (Thu 4 PM in production)`);
-    console.log(`  - Every 8 mins: Final Report to Rick (Fri 12 PM in production)\n`);
+    console.log(`  - Every 2-3 mins: Owner Reminders`);
+    console.log(`  - Every 4 mins: Chase Notification to Matt & Ivan`);
+    console.log(`  - Every 6 mins: Review Notification to Neil & Karl`);
+    console.log(`  - Every 8 mins: Final Report to Rick\n`);
   } else {
-    console.log(`\n[SCHEDULE] Weekly Notification Timeline (PRODUCTION Mode):`);
-    console.log(`  - Wednesday 9 AM: Owner Reminders`);
-    console.log(`  - Wed-Thu 9 AM-5 PM (hourly): Follow-up Reminders`);
-    console.log(`  - Thursday 9 AM: Chase Notification to Matt & Ivan`);
-    console.log(`  - Thursday 4 PM: Review Notification to Neil & Karl`);
-    console.log(`  - Friday 12 PM: Final Report to Rick\n`);
+    console.log(`\n[SCHEDULE] Weekly Notification Timeline (PRODUCTION Mode - Pacific Time):`);
+    console.log(`  - Wednesday 3 PM PT: Owner Reminders`);
+    console.log(`  - Thursday 3 PM PT: Owner Reminders`);
+    console.log(`  - Friday 9 AM PT: Owner Reminders`);
+    console.log(`  - Friday 10 AM PT: Owner Reminders`);
+    console.log(`  - Friday 11 AM PT: Owner Reminders`);
+    console.log(`  - Friday 12 PM PT: Review Notification to Neil & Karl`);
+    console.log(`  - Friday 5 PM PT: Final Report to Rick\n`);
   }
 }
 
