@@ -1,4 +1,4 @@
-require('dotenv').config();
+// require('dotenv').config(); // Not needed on Render - uses environment variables directly
 const express = require('express');
 const { google } = require('googleapis');
 const cors = require('cors');
