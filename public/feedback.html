@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Alpha - Portfolio Feedback</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Premium Header */
+    .header {
+      background: linear-gradient(135deg, #1a365d 0%, #2d5a8c 100%);
+      border-bottom: 3px solid #d4af37;
+      padding: 32px 0;
+      box-shadow: 0 4px 20px rgba(26, 54, 93, 0.3);
+      margin-bottom: 48px;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    .logo {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #ffffff;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .tagline {
+      color: #d4af37;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    /* Main Content */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a365d;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .page-subtitle {
+      color: #64748b;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .control-btn {
+      background: white;
+      border: 2px solid #e2e8f0;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #475569;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .control-btn:hover {
+      border-color: #d4af37;
+      color: #1a365d;
+      background: #fffbf0;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+    }
+
+    /* Fund Grouping Headers */
+    .fund-group {
+      margin-bottom: 36px;
+    }
+
+    .fund-header {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a365d;
+      padding: 16px 24px;
+      background: white;
+      border-left: 4px solid #d4af37;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Premium Card Design */
+    .accordion-item {
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    .accordion-item:hover {
+      border-color: #d4af37;
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .accordion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 28px;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .accordion-header:hover {
+      background-color: #f8fafc;
+    }
+
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .company-name {
+      font-weight: 700;
+      font-size: 20px;
+      color: #1a365d;
+      letter-spacing: -0.3px;
+    }
+
+    .owner-name {
+      color: #64748b;
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+      width: fit-content;
+    }
+
+    .status-badge.complete {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.pending {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .feedback-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .feedback-indicator.has-feedback {
+      background: #d4af37;
+      box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+      }
+      50% {
+        box-shadow: 0 0 0 8px rgba(212, 175, 55, 0.1);
+      }
+    }
+
+    .chevron {
+      color: #94a3b8;
+      transition: all 0.3s ease;
+    }
+
+    .accordion-header:hover .chevron {
+      color: #d4af37;
+    }
+
+    .accordion-item.expanded .chevron {
+      transform: rotate(180deg);
+      color: #d4af37;
+    }
+
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      padding: 0 28px;
+    }
+
+    .accordion-item.expanded .accordion-content {
+      max-height: 600px;
+      padding: 0 28px 28px 28px;
+      animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 15px;
+      line-height: 1.6;
+      resize: vertical;
+      transition: all 0.3s ease;
+      background: #fafbfc;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
+      background: white;
+    }
+
+    textarea::placeholder {
+      color: #94a3b8;
+      font-style: italic;
+    }
+
+    /* Premium Summary Box */
+    .summary-box {
+      background: white;
+      border: 2px solid #d4af37;
+      border-radius: 12px;
+      padding: 32px;
+      margin-top: 48px;
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
+    }
+
+    .summary-box h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a365d;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .summary-icon {
+      font-size: 28px;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .stat {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #d4af37;
+    }
+
+    .stat strong {
+      font-size: 36px;
+      font-weight: 800;
+      color: #1a365d;
+      display: block;
+      margin-bottom: 8px;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .company-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .company-list-title {
+      font-weight: 700;
+      color: #1a365d;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .company-list li {
+      background: linear-gradient(135deg, #1a365d 0%, #2d5a8c 100%);
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(26, 54, 93, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .company-list li:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26, 54, 93, 0.3);
+    }
+
+    /* Premium Submit Button */
+    .submit-btn {
+      background: linear-gradient(135deg, #1a365d 0%, #2d5a8c 100%);
+      color: white;
+      padding: 18px 48px;
+      border: none;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 32px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(26, 54, 93, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #d4af37 0%, #f0c857 100%);
+      color: #1a365d;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(212, 175, 55, 0.4);
+    }
+
+    .submit-btn:active:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .submit-arrow {
+      font-size: 24px;
+      transition: transform 0.3s ease;
+    }
+
+    .submit-btn:hover:not(:disabled) .submit-arrow {
+      transform: translateX(4px);
+    }
+
+    /* Success/Error States */
+    #result {
+      margin-top: 32px;
+    }
+
+    .success-message {
+      background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+      padding: 32px;
+      border-radius: 12px;
+      border: 2px solid #15803d;
+      box-shadow: 0 4px 16px rgba(21, 128, 61, 0.2);
+      animation: slideIn 0.4s ease;
+    }
+
+    .success-message h3 {
+      margin: 0 0 16px 0;
+      font-size: 24px;
+      color: #15803d;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .success-icon {
+      width: 32px;
+      height: 32px;
+      background: #15803d;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .success-message p {
+      color: #166534;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 8px 0;
+    }
+
+    .success-companies {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #15803d;
+    }
+
+    .error-message {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #991b1b;
+      font-weight: 700;
+      padding: 24px;
+      border-radius: 12px;
+      border: 2px solid #dc2626;
+      font-size: 16px;
+      box-shadow: 0 4px 16px rgba(220, 38, 38, 0.2);
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header-content {
+        padding: 0 20px;
+      }
+
+      .logo {
+        font-size: 28px;
+      }
+
+      .tagline {
+        font-size: 12px;
+      }
+
+      .container {
+        padding: 0 20px;
+      }
+
+      .page-title {
+        font-size: 24px;
+      }
+
+      .company-name {
+        font-size: 18px;
+      }
+
+      .controls {
+        flex-direction: column;
+      }
+
+      .control-btn {
+        width: 100%;
+      }
+
+      .summary-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .submit-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #64748b;
+      font-size: 18px;
+    }
+
+    .loading::after {
+      content: '...';
+      animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Premium Header -->
+  <div class="header">
+    <div class="header-content">
+      <div class="logo">DIGITAL ALPHA</div>
+      <div class="tagline">Portfolio Management System</div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <h1 class="page-title">Portfolio Company Feedback</h1>
+    <p class="page-subtitle">Select any portfolio company to provide feedback. Only companies with feedback will receive notification emails.</p>
+
+    <div class="controls">
+      <button class="control-btn" onclick="expandAll()">Expand All</button>
+      <button class="control-btn" onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <form id="feedbackForm" onsubmit="submitFeedback(event)">
+      <div id="companiesList">
+        <div class="loading">Loading portfolio companies</div>
+      </div>
+
+      <div class="summary-box" id="summaryBox">
+        <h3>
+          <span class="summary-icon">📊</span>
+          Feedback Summary
+        </h3>
+        <div class="summary-stats">
+          <div class="stat">
+            <strong id="feedbackCount">0</strong>
+            <div class="stat-label">Companies with Feedback</div>
+          </div>
+          <div class="stat">
+            <strong id="totalCount">0</strong>
+            <div class="stat-label">Total Companies</div>
+          </div>
+        </div>
+        <div id="companiesWithFeedback" style="display: none;">
+          <p class="company-list-title">Companies receiving feedback:</p>
+          <ul class="company-list" id="companyList"></ul>
+        </div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn" disabled>
+        Submit Feedback
+        <span class="submit-arrow">→</span>
+      </button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const expandedItems = new Set();
+    let companies = [];
+
+    // Group companies by fund
+    function groupCompaniesByFund(companies) {
+      const groups = {
+        'Fund I': [],
+        'Fund II': [],
+        'Fund III': []
+      };
+
+      companies.forEach(company => {
+        // Try to detect fund from company name or owner
+        // This is a simple heuristic - adjust based on your data
+        if (company.fund) {
+          const fundKey = 'Fund ' + company.fund;
+          if (groups[fundKey]) {
+            groups[fundKey].push(company);
+          } else {
+            groups['Fund III'].push(company); // default
+          }
+        } else {
+          // Default to Fund III if no fund specified
+          groups['Fund III'].push(company);
+        }
+      });
+
+      return groups;
+    }
+
+    async function loadCompanies() {
+      try {
+        const response = await fetch('/reminders');
+        const reminders = await response.json();
+        companies = reminders.filter(r => r.role === 'portfolio_owner');
+
+        renderCompanies();
+        updateSummary();
+      } catch (error) {
+        console.error('Error loading companies:', error);
+        document.getElementById('companiesList').innerHTML =
+          '<p class="error-message">Error loading companies. Please refresh the page.</p>';
+      }
+    }
+
+    function renderCompanies() {
+      const companiesList = document.getElementById('companiesList');
+      document.getElementById('totalCount').textContent = companies.length;
+
+      // For now, show all companies in one section
+      // You can enhance this to actually group by fund if you have that data
+      const html = `
+        <div class="fund-group">
+          ${companies.map(company => `
+            <div class="accordion-item" data-company-id="${company.id}">
+              <div class="accordion-header" onclick="toggleAccordion('${company.id}')">
+                <div class="header-left">
+                  <span class="company-name">${company.name}</span>
+                  <span class="owner-name">${company.owner}</span>
+                  <span class="status-badge ${company.status === 'complete' ? 'complete' : 'pending'}">
+                    ${company.status}
+                  </span>
+                </div>
+                <div class="header-right">
+                  <span class="feedback-indicator" id="indicator-${company.id}"></span>
+                  <svg class="chevron" width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="accordion-content" id="content-${company.id}">
+                <textarea
+                  name="${company.id}"
+                  id="feedback-${company.id}"
+                  placeholder="Enter your feedback here..."
+                  oninput="updateIndicator('${company.id}')"
+                ></textarea>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      companiesList.innerHTML = html;
+    }
+
+    function toggleAccordion(companyId) {
+      const item = document.querySelector(`[data-company-id="${companyId}"]`);
+      const isExpanded = item.classList.contains('expanded');
+
+      if (isExpanded) {
+        item.classList.remove('expanded');
+        expandedItems.delete(companyId);
+      } else {
+        item.classList.add('expanded');
+        expandedItems.add(companyId);
+        // Focus the textarea after expansion
+        setTimeout(() => {
+          document.getElementById('feedback-' + companyId).focus();
+        }, 300);
+      }
+    }
+
+    function expandAll() {
+      document.querySelectorAll('.accordion-item').forEach(item => {
+        item.classList.add('expanded');
+        expandedItems.add(item.dataset.companyId);
+      });
+    }
+
+    function collapseAll() {
+      document.querySelectorAll('.accordion-item').forEach(item => {
+        item.classList.remove('expanded');
+        expandedItems.delete(item.dataset.companyId);
+      });
+    }
+
+    function updateIndicator(companyId) {
+      const textarea = document.getElementById('feedback-' + companyId);
+      const indicator = document.getElementById('indicator-' + companyId);
+
+      if (textarea.value.trim()) {
+        indicator.classList.add('has-feedback');
+      } else {
+        indicator.classList.remove('has-feedback');
+      }
+
+      updateSummary();
+    }
+
+    function updateSummary() {
+      const textareas = document.querySelectorAll('textarea');
+      const companiesWithFeedback = [];
+      const companyNames = {};
+
+      companies.forEach(company => {
+        companyNames[company.id] = company.name;
+      });
+
+      textareas.forEach(textarea => {
+        if (textarea.value.trim()) {
+          const companyId = textarea.name;
+          companiesWithFeedback.push(companyNames[companyId]);
+        }
+      });
+
+      const count = companiesWithFeedback.length;
+      document.getElementById('feedbackCount').textContent = count;
+
+      // Enable/disable submit button
+      const submitBtn = document.getElementById('submitBtn');
+      if (count > 0) {
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.disabled = true;
+      }
+
+      const feedbackSection = document.getElementById('companiesWithFeedback');
+      const companyList = document.getElementById('companyList');
+
+      if (count > 0) {
+        feedbackSection.style.display = 'block';
+        companyList.innerHTML = companiesWithFeedback
+          .map(name => '<li>' + name + '</li>')
+          .join('');
+      } else {
+        feedbackSection.style.display = 'none';
+      }
+    }
+
+    async function submitFeedback(event) {
+      event.preventDefault();
+
+      const formData = new FormData(event.target);
+      const feedback = {};
+
+      for (let [key, value] of formData.entries()) {
+        if (value.trim()) {
+          feedback[key] = value.trim();
+        }
+      }
+
+      if (Object.keys(feedback).length === 0) {
+        document.getElementById('result').innerHTML =
+          '<p class="error-message">⚠️ No feedback provided. Please add feedback for at least one company.</p>';
+        return;
+      }
+
+      // Disable submit button during submission
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Submitting...';
+
+      try {
+        const response = await fetch('/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(feedback)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          document.getElementById('result').innerHTML =
+            '<div class="success-message">' +
+            '<h3>' +
+            '<span class="success-icon">✓</span>' +
+            'Feedback Successfully Submitted' +
+            '</h3>' +
+            '<p style="font-size: 18px;"><strong>' + result.count + '</strong> portfolio ' +
+            (result.count === 1 ? 'owner has' : 'owners have') + ' been notified</p>' +
+            '<div class="success-companies">' +
+            '<p class="company-list-title">Feedback sent to:</p>' +
+            '<ul class="company-list">' +
+            result.companies.map(name => '<li>' + name + '</li>').join('') +
+            '</ul>' +
+            '</div>' +
+            '</div>';
+
+          // Clear all textareas and reset indicators
+          document.querySelectorAll('textarea').forEach(ta => {
+            ta.value = '';
+            const companyId = ta.name;
+            document.getElementById('indicator-' + companyId).classList.remove('has-feedback');
+          });
+
+          collapseAll();
+          updateSummary();
+
+          // Scroll to result
+          document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } else {
+          document.getElementById('result').innerHTML =
+            '<p class="error-message">⚠️ Error: ' + result.error + '</p>';
+        }
+      } catch (error) {
+        document.getElementById('result').innerHTML =
+          '<p class="error-message">⚠️ Error submitting feedback: ' + error.message + '</p>';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    }
+
+    // Load companies on page load
+    loadCompanies();
+  </script>
+</body>
+</html>

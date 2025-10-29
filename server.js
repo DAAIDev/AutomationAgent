@@ -352,9 +352,7 @@ async function sendFinalReport() {
     : '<li style="color: #999;">All complete!</li>';
 
   try {
-    const subject = allComplete
-      ? `[Final Report] Weekly Tracker Update - All Sections Complete`
-      : `[Final Report] Weekly Tracker Update - ${completionRate}% Complete`;
+    const subject = `Weekly Tracker Review - All Updates Complete`;
 
     const body = `
       <html>
@@ -371,6 +369,13 @@ async function sendFinalReport() {
               <strong>${completedOwners.length}</strong> of <strong>${portfolioOwners.length}</strong> updates completed
             </p>
           </div>
+
+          <p style="margin: 30px 0;">
+            <a href="http://localhost:${PORT}/feedback.html"
+               style="background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px;">
+              Add Feedback for Any Company
+            </a>
+          </p>
 
           <h3 style="color: #28a745;">Completed Updates (${completedOwners.length}):</h3>
           <ul style="line-height: 1.8;">
@@ -604,6 +609,115 @@ app.post('/reset-reminders', async (req, res) => {
     res.json({ success: true, message: 'All portfolio owners reset to pending' });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Feedback page - now served as static HTML from /public/feedback.html
+// (HTML file loads companies dynamically via /reminders endpoint)
+
+// Submit feedback for companies
+app.post('/feedback', async (req, res) => {
+  try {
+    const feedback = req.body; // Object with company IDs as keys, feedback text as values
+
+    if (!feedback || Object.keys(feedback).length === 0) {
+      return res.json({ success: false, error: 'No feedback provided' });
+    }
+
+    const reminders = await loadReminders();
+    const companiesWithFeedback = [];
+    let emailCount = 0;
+
+    for (const [companyId, feedbackText] of Object.entries(feedback)) {
+      const company = reminders.find(r => r.id === companyId && r.role === 'portfolio_owner');
+
+      if (!company) {
+        console.log(`[WARNING] Company not found: ${companyId}`);
+        continue;
+      }
+
+      companiesWithFeedback.push(company.name);
+
+      // Send feedback email to owner(s)
+      const subject = `Rick's Feedback for ${company.name}`;
+      const body = `
+        <html>
+          <head>
+            <meta charset="UTF-8">
+          </head>
+          <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>Feedback for ${company.name}</h2>
+            <p>Hi ${company.owner},</p>
+
+            <div style="background: #f0f8ff; border-left: 4px solid #007bff; padding: 15px; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #007bff;">Rick's Feedback:</h3>
+              <p style="white-space: pre-wrap; margin: 0; line-height: 1.6;">${feedbackText}</p>
+            </div>
+
+            <p style="margin-top: 30px;">
+              <a href="http://localhost:${PORT}/feedback-complete/${company.id}"
+                 style="background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+                Mark Done
+              </a>
+            </p>
+
+            <p style="color: #666; font-size: 14px; margin-top: 30px;">
+              This feedback is from the weekly tracker review cycle.
+            </p>
+          </body>
+        </html>
+      `;
+
+      // Handle multiple email addresses
+      const emails = Array.isArray(company.email) ? company.email : [company.email];
+      for (const email of emails) {
+        await sendEmail(email, subject, body);
+        emailCount++;
+        console.log(`[OK] Sent feedback to ${email} for ${company.name}`);
+      }
+    }
+
+    res.json({
+      success: true,
+      count: emailCount,
+      companies: companiesWithFeedback
+    });
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Mark feedback as complete
+app.get('/feedback-complete/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const reminders = await loadReminders();
+    const company = reminders.find(r => r.id === id && r.role === 'portfolio_owner');
+
+    if (!company) {
+      return res.status(404).send('Company not found');
+    }
+
+    // You could track feedback completion status if needed
+    // For now, just show confirmation
+
+    res.send(`
+      <html>
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h1 style="color: #28a745;">✓ Feedback Acknowledged</h1>
+          <p style="font-size: 18px;">Thank you for acknowledging the feedback for <strong>${company.name}</strong>.</p>
+          <p style="color: #666;">You can close this window now.</p>
+        </body>
+      </html>
+    `);
+  } catch (error) {
+    console.error('Error marking feedback complete:', error);
+    res.status(500).send('Error processing request');
   }
 });
 

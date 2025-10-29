@@ -19,7 +19,10 @@
     "id": "packetfabric",
     "name": "PacketFabric",
     "owner": "Matt/Shiju",
-    "email": ["matt@dalphafund.com", "shiju@dalphafund.com"],
+    "email": [
+      "matt@dalphafund.com",
+      "shiju@dalphafund.com"
+    ],
     "status": "pending",
     "role": "portfolio_owner"
   },
@@ -36,7 +39,7 @@
     "name": "Element8",
     "owner": "Matt",
     "email": "matt@dalphafund.com",
-    "status": "pending",
+    "status": "complete",
     "role": "portfolio_owner"
   },
   {
@@ -51,7 +54,10 @@
     "id": "welink",
     "name": "WeLink",
     "owner": "Ram/Terry",
-    "email": ["ram@dalphafund.com", "terry@dalphafund.com"],
+    "email": [
+      "ram@dalphafund.com",
+      "terry@dalphafund.com"
+    ],
     "status": "pending",
     "role": "portfolio_owner"
   },
@@ -59,7 +65,10 @@
     "id": "tarana",
     "name": "Tarana",
     "owner": "Neil/Matt",
-    "email": ["neil@dalphafund.com", "matt@dalphafund.com"],
+    "email": [
+      "neil@dalphafund.com",
+      "matt@dalphafund.com"
+    ],
     "status": "pending",
     "role": "portfolio_owner"
   },
@@ -67,7 +76,10 @@
     "id": "digital-media",
     "name": "Digital Media",
     "owner": "Ram/Shiju",
-    "email": ["ram@dalphafund.com", "shiju@dalphafund.com"],
+    "email": [
+      "ram@dalphafund.com",
+      "shiju@dalphafund.com"
+    ],
     "status": "pending",
     "role": "portfolio_owner"
   },
@@ -75,7 +87,10 @@
     "id": "quantela",
     "name": "Quantela",
     "owner": "Vyom/Shiju",
-    "email": ["vyom@dalphafund.com", "shiju@dalphafund.com"],
+    "email": [
+      "vyom@dalphafund.com",
+      "shiju@dalphafund.com"
+    ],
     "status": "pending",
     "role": "portfolio_owner"
   },
@@ -83,8 +98,11 @@
     "id": "energybox",
     "name": "Energybox",
     "owner": "Vyom/Terry",
-    "email": ["vyom@dalphafund.com", "terry@dalphafund.com"],
-    "status": "pending",
+    "email": [
+      "vyom@dalphafund.com",
+      "terry@dalphafund.com"
+    ],
+    "status": "complete",
     "role": "portfolio_owner"
   },
   {
@@ -100,15 +118,18 @@
     "name": "JetStream",
     "owner": "Hamad",
     "email": "hamad@dalphafund.com",
-    "status": "pending",
+    "status": "complete",
     "role": "portfolio_owner"
   },
   {
     "id": "pryon",
     "name": "Pryon",
     "owner": "Neil/Shiju",
-    "email": ["neil@dalphafund.com", "shiju@dalphafund.com"],
-    "status": "pending",
+    "email": [
+      "neil@dalphafund.com",
+      "shiju@dalphafund.com"
+    ],
+    "status": "complete",
     "role": "portfolio_owner"
   },
   {
