@@ -538,6 +538,104 @@ app.get('/reminders', async (req, res) => {
   }
 });
 
+// Send manual reminder to specific company
+app.post('/send-manual-reminder/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (!tokens) {
+      return res.status(401).json({ success: false, error: 'Not authenticated with Gmail' });
+    }
+
+    const reminders = await loadReminders();
+    const reminder = reminders.find(r => r.id === id && r.role === 'portfolio_owner');
+
+    if (!reminder) {
+      return res.status(404).json({ success: false, error: 'Company not found' });
+    }
+
+    const subject = `Reminder: ${reminder.name} Portfolio Update`;
+    const body = `
+      <html>
+        <head>
+          <meta charset="UTF-8">
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+          <h2>Portfolio Update Reminder</h2>
+          <p>Hi ${reminder.owner},</p>
+          <p>This is your reminder to provide an update for <strong>${reminder.name}</strong>.</p>
+          <p>
+            <a href="${process.env.BASE_URL}/complete/${reminder.id}"
+               style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
+              Mark as Complete
+            </a>
+          </p>
+          <p>Thank you!</p>
+        </body>
+      </html>
+    `;
+
+    // Handle multiple email addresses
+    const emails = Array.isArray(reminder.email) ? reminder.email : [reminder.email];
+    for (const email of emails) {
+      await sendEmail(email, subject, body);
+      console.log(`[OK] Sent manual reminder to ${email} for ${reminder.name}`);
+    }
+
+    res.json({ success: true, message: `Reminder sent to ${reminder.name}` });
+  } catch (error) {
+    console.error('Error sending manual reminder:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Admin mark as complete
+app.post('/admin-complete/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const reminders = await loadReminders();
+    const reminder = reminders.find(r => r.id === id && r.role === 'portfolio_owner');
+
+    if (!reminder) {
+      return res.status(404).json({ success: false, error: 'Company not found' });
+    }
+
+    // Mark as complete
+    reminder.status = 'complete';
+    await saveReminders(reminders);
+
+    // Send notification
+    try {
+      if (tokens) {
+        const subject = `[Admin Complete] ${reminder.name} Update Marked Complete`;
+        const body = `
+          <html>
+            <head>
+              <meta charset="UTF-8">
+            </head>
+            <body style="font-family: Arial, sans-serif; padding: 20px;">
+              <h2>Update Marked Complete (Admin Action)</h2>
+              <p>The update for <strong>${reminder.name}</strong> (Owner: <strong>${reminder.owner}</strong>) has been marked as complete by an administrator.</p>
+              <p>Time: ${new Date().toLocaleString()}</p>
+            </body>
+          </html>
+        `;
+
+        await sendEmail('dev@digitalalpha.ai', subject, body);
+      }
+    } catch (emailError) {
+      console.error('Failed to send notification:', emailError);
+    }
+
+    console.log(`[OK] Admin marked ${reminder.name} as complete`);
+    res.json({ success: true, message: `${reminder.name} marked as complete` });
+  } catch (error) {
+    console.error('Error marking complete:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Mark reminder as complete
 app.get('/complete/:id', async (req, res) => {
   const { id } = req.params;

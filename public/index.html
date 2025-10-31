@@ -250,6 +250,46 @@
       opacity: 0.9;
       font-weight: 400;
     }
+
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-right: 5px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .action-btn.send {
+      background: #007bff;
+      color: white;
+    }
+
+    .action-btn.send:hover {
+      background: #0056b3;
+    }
+
+    .action-btn.complete {
+      background: #28a745;
+      color: white;
+    }
+
+    .action-btn.complete:hover {
+      background: #218838;
+    }
   </style>
 </head>
 <body>
@@ -284,11 +324,12 @@
             <th>Owner</th>
             <th>Email</th>
             <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody id="reminderTable">
           <tr>
-            <td colspan="4" style="text-align: center; color: #999;">Loading...</td>
+            <td colspan="5" style="text-align: center; color: #999;">Loading...</td>
           </tr>
         </tbody>
       </table>
@@ -428,8 +469,16 @@
           <tr>
             <td><strong>${r.name}</strong></td>
             <td>${r.owner}</td>
-            <td>${r.email}</td>
+            <td>${Array.isArray(r.email) ? r.email.join(', ') : r.email}</td>
             <td><span class="badge ${r.status}">${r.status}</span></td>
+            <td>
+              <button class="action-btn send" onclick="sendManualReminder('${r.id}', '${r.name}')" ${!isAuthenticated ? 'disabled' : ''}>
+                Send Reminder
+              </button>
+              <button class="action-btn complete" onclick="adminComplete('${r.id}', '${r.name}')" ${!isAuthenticated ? 'disabled' : ''}>
+                Mark Complete
+              </button>
+            </td>
           </tr>
         `).join('');
 
@@ -521,6 +570,43 @@
       setTimeout(() => {
         messageDiv.className = 'message';
       }, 5000);
+    }
+
+    // Send manual reminder
+    async function sendManualReminder(id, name) {
+      if (!confirm(`Send reminder email to ${name}?`)) return;
+
+      try {
+        const response = await fetch(`/send-manual-reminder/${id}`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(`Reminder sent to ${name}!`, 'success');
+        } else {
+          showMessage(`Failed to send: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
+    }
+
+    // Admin complete
+    async function adminComplete(id, name) {
+      if (!confirm(`Mark ${name} as complete?`)) return;
+
+      try {
+        const response = await fetch(`/admin-complete/${id}`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showMessage(`${name} marked as complete!`, 'success');
+          loadReminders();
+        } else {
+          showMessage(`Failed: ${data.error}`, 'error');
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      }
     }
 
     // Auto-refresh reminders every 10 seconds
