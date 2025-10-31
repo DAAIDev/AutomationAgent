@@ -205,7 +205,7 @@ async function sendReminders() {
             <p>Hi ${reminder.owner},</p>
             <p>This is your reminder to provide an update for <strong>${reminder.name}</strong>.</p>
             <p>
-              <a href="http://localhost:${PORT}/complete/${reminder.id}"
+              <a href="${process.env.BASE_URL}/complete/${reminder.id}"
                  style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
                 Mark as Complete
               </a>
@@ -371,7 +371,7 @@ async function sendFinalReport() {
           </div>
 
           <p style="margin: 30px 0;">
-            <a href="http://localhost:${PORT}/feedback.html"
+            <a href="${process.env.BASE_URL}/feedback.html"
                style="background-color: #007bff; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block; font-size: 16px;">
               Add Feedback for Any Company
             </a>
@@ -655,7 +655,7 @@ app.post('/feedback', async (req, res) => {
             </div>
 
             <p style="margin-top: 30px;">
-              <a href="http://localhost:${PORT}/feedback-complete/${company.id}"
+              <a href="${process.env.BASE_URL}/feedback-complete/${company.id}"
                  style="background-color: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">
                 Mark Done
               </a>
